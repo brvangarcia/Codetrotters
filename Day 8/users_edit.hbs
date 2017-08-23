@@ -1,6 +1,11 @@
-<h1>Edit</h1>
-<h1>{{firstName}} {{lastName}}</h1>
-<form class="" action="/users/:edit" method="POST">
+{{#each data}}
+  <tr>
+    <td>{{firstName}}</td>
+    <td>{{lastName}}</td>
+    <td>{{id}}</td>
+  </tr>
+{{/each}}
+<form class="" action="/users/{{data.id}}/edit" method="POST">
   <label for="">Name</label><br>
   <input type="text" name="name" id="name" value=""><br>
   <label for="">Last</label><br>

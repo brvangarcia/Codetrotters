@@ -1,52 +1,62 @@
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
+const express = require('express');
+const router = express.Router();
 
-const { testConection} = require("./orm");
-const { User, migrateDatabase} = require("./models")
+const {User} = require("../models");
 
-var index = require('./routes/index');
-var users = require('./routes/users');
-
-var app = express();
-
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'hbs');
-
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.use('/', index);
-app.use('/users', users);
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+/* GET users listing. */
+router.get('/', function(req, res, next) {
+  User.findAll().then((users) => {
+    res.render("users_list", { data: users});
+  });
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+router.post('/create', function(req, res, next) {
+  const {name, last} = req.body;
+  User.create({firstName: name, lastName: last}).then((user) => {
+  res.render("users_details", {data: user});
+});
 });
 
-testConection();
-//migrateDatabase();
+router.get('/create', function(req, res, next) {
+    res.render("users_create");
+});
 
-module.exports = app;
+router.get('/:id/edit', function(req, res, next) {
+  const _id = req.params;
+  User.findById(_id.id).then(User => {
+    res.render("users_edit", { data: User});
+})
+});
+
+router.post("/:id/edit", function(req, res, next){
+  const { name, last} =  req.body;
+  const _id = req.params;
+  User.findById(_id.id).then(User => {
+    User.firstName = name;
+    User.lastName = last;
+    User.save().then(() => {
+      res.render("users_details", { data: User});
+    })
+  })
+});
+
+router.get("/:id", function(req, res, next) {
+  const _id = req.params;
+  User.findById(_id.id).then(User => {
+    res.render("users_details", { data: User});
+})
+});
+
+router.get("/:id/delete", function(req, res, next) {
+  const _id = req.params;
+  User.findById(_id.id).then((result) => {
+        return result.destroy({ where: {}})
+            .then((u) => { User.findAll().then((users) => {
+              res.render("users_list", { data: users});
+            }); });
+    });
+});
+
+
+
+module.exports = router;
